@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- alone dell'ensō -->
+    <path android:strokeColor="#55FF2A3D" android:strokeWidth="7" android:strokeLineCap="round"
+        android:pathData="M42,30 A26,26 0 1,0 72,34" />
+    <!-- ensō -->
+    <path android:strokeColor="#FFFF2A3D" android:strokeWidth="3.2" android:strokeLineCap="round"
+        android:pathData="M42,30 A26,26 0 1,0 72,34" />
+    <!-- carpa koi stilizzata -->
+    <path android:fillColor="#33F2EBE0" android:strokeColor="#FFF2EBE0" android:strokeWidth="1.6"
+        android:strokeLineJoin="round"
+        android:pathData="M38,62 C44,52 58,48 68,52 C62,55 56,60 50,63 C46,65 42,66 38,62 Z" />
+    <path android:fillColor="#33F2EBE0" android:strokeColor="#FFF2EBE0" android:strokeWidth="1.6"
+        android:strokeLineJoin="round"
+        android:pathData="M38,62 L30,57 L33,64 L29,70 Z" />
+    <path android:fillColor="#FFFF2A3D" android:pathData="M56,53 m-3,0 a3,2.4 0 1,0 6,0 a3,2.4 0 1,0 -6,0" />
+    <path android:fillColor="#FFF2EBE0" android:pathData="M64,52.5 m-1,0 a1,1 0 1,0 2,0 a1,1 0 1,0 -2,0" />
+</vector>
