@@ -1,14 +1,18 @@
 package it.demosbar.koi;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RadialGradient;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.service.wallpaper.WallpaperService;
+import android.util.Base64;
 import android.view.Choreographer;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -578,49 +582,12 @@ public class KoiWallpaperService extends WallpaperService {
             float cx = w * 0.5f, cy = h * 0.40f;
             float R = minSide * 0.21f;
 
-            // ensō: pennellata circolare con spessore variabile
-            Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-            p.setStyle(Paint.Style.STROKE);
-            p.setStrokeCap(Paint.Cap.ROUND);
-            int segs = 140;
-            double start = Math.toRadians(118), sweep = Math.toRadians(326);
-            float[][] layers = {{3.2f, 12}, {2.0f, 30}, {1.25f, 90}, {1f, 200}};
-            for (float[] L : layers) {
-                p.setColor(NEON_RED);
-                p.setAlpha((int) L[1]);
-                for (int i = 0; i < segs; i++) {
-                    double t0 = i / (double) segs, t1 = (i + 1) / (double) segs;
-                    double a0 = start + sweep * t0, a1 = start + sweep * t1;
-                    float thick = (float) (R * 0.085 * (0.25 + 0.75 * Math.pow(Math.sin(Math.PI * Math.min(1, t0 * 1.15)), 0.7)));
-                    if (t0 > 0.87) thick *= (float) (1 - (t0 - 0.87) / 0.13 * 0.8);
-                    p.setStrokeWidth(Math.max(dp, thick * L[0]));
-                    c.drawLine(cx + (float) Math.cos(a0) * R, cy + (float) Math.sin(a0) * R,
-                            cx + (float) Math.cos(a1) * R, cy + (float) Math.sin(a1) * R, p);
-                }
-            }
-            // anima chiara dell'ensō
-            p.setColor(0xFFFFC7CC);
-            p.setAlpha(170);
-            for (int i = 0; i < segs; i++) {
-                double t0 = i / (double) segs, t1 = (i + 1) / (double) segs;
-                double a0 = start + sweep * t0, a1 = start + sweep * t1;
-                float thick = (float) (R * 0.02 * (0.3 + 0.7 * Math.sin(Math.PI * Math.min(1, t0 * 1.15))));
-                p.setStrokeWidth(Math.max(dp * 0.6f, thick));
-                c.drawLine(cx + (float) Math.cos(a0) * R, cy + (float) Math.sin(a0) * R,
-                        cx + (float) Math.cos(a1) * R, cy + (float) Math.sin(a1) * R, p);
-            }
+            // logo Demo's (la D nell'ensō) al neon
+            drawLogo(c, cx, cy, R);
 
-            // D corsiva al neon
             Paint t = new Paint(Paint.ANTI_ALIAS_FLAG);
             t.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC));
             t.setTextAlign(Paint.Align.CENTER);
-            t.setTextSize(R * 1.25f);
-            float ty = cy + R * 0.43f;
-            t.setColor(CREAM);
-            t.setShadowLayer(R * 0.12f, 0, 0, NEON_RED);
-            c.drawText("D", cx, ty, t);
-            t.setShadowLayer(R * 0.04f, 0, 0, 0xFFFF6A78);
-            c.drawText("D", cx, ty, t);
 
             // scritta Demo's sotto l'ensō
             t.setTextSize(R * 0.34f);
@@ -630,6 +597,50 @@ public class KoiWallpaperService extends WallpaperService {
 
             // kanji verticali
             drawVertical(c, "デモズ", w - 30 * dp, h * 0.16f, 22 * dp, NEON_RED, 200);
+        }
+
+        private void drawLogo(Canvas c, float cx, float cy, float R) {
+            Bitmap ring = decodeMask(LogoData.RING);
+            Bitmap d = decodeMask(LogoData.D);
+            if (ring == null || d == null) return;
+            float scale = R / LogoData.RADIUS;
+            Matrix mx = new Matrix();
+            mx.setScale(scale, scale);
+            mx.postTranslate(cx - LogoData.CX * scale, cy - LogoData.CY * scale);
+            Paint p = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+            float[] blurs = {0.13f, 0.055f, 0.022f};
+            Bitmap[] parts = {ring, d};
+            for (Bitmap part : parts) {
+                // alone rosso
+                for (float bl : blurs) {
+                    p.setColor(NEON_RED);
+                    p.setMaskFilter(new BlurMaskFilter(Math.max(1f, R * bl), BlurMaskFilter.Blur.NORMAL));
+                    c.drawBitmap(part, mx, p);
+                }
+                p.setMaskFilter(null);
+                // tubo del neon: la D crema, il cerchio rosso
+                p.setColor(part == d ? CREAM : NEON_RED);
+                c.drawBitmap(part, mx, p);
+                // anima chiara
+                p.setColor(part == d ? 0xFFFFFFFF : 0xFFFF9AA5);
+                p.setAlpha(120);
+                c.drawBitmap(part, mx, p);
+            }
+            ring.recycle();
+            d.recycle();
+        }
+
+        private Bitmap decodeMask(String b64) {
+            try {
+                byte[] bytes = Base64.decode(b64, Base64.DEFAULT);
+                Bitmap src = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                if (src == null) return null;
+                Bitmap alpha = src.extractAlpha();
+                src.recycle();
+                return alpha;
+            } catch (Throwable e) {
+                return null;
+            }
         }
 
         private void drawVertical(Canvas c, String s, float x, float y, float size, int color, int alpha) {
